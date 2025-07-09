@@ -9,6 +9,10 @@ namespace mtrn3100 {
   float vy;     // usually 0 for planar diff drive
   float omega;  // angular velocity (rad/s)
 };
+struct WheelSpeeds {
+    float wL;  // Left wheel angular velocity (rad/s)
+    float wR;  // Right wheel angular velocity (rad/s)
+};
 
 class Kinematics  {
 
@@ -22,6 +26,13 @@ public:
         v.vy = 0.0;
         v.omega = r * (wR - wL) / b;
         return v;
+    }
+
+    WheelSpeeds inverseKinematics(float vx, float omega) {
+        WheelSpeeds ws;
+        ws.wL = (vx - (b / 2.0f) * omega) / r;
+        ws.wR = (vx + (b / 2.0f) * omega) / r;
+        return ws;
     }
 
 private:
