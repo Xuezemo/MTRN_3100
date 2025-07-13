@@ -1,4 +1,4 @@
-// Headers List needed in main.cpp
+// Headers needed in main.cpp
 #include "Motor.hpp"
 #include "Encoder.hpp"
 #include "PIDController.hpp"
@@ -22,7 +22,7 @@ void driveToWall(
     mtrn3100::Motor& rightMotor,
     mtrn3100::PIDController& distPID,
     float maxWheelSpeedRadPerSec,
-    float target_mm = 100.0f,   // Default: 100 mm from wall
+    float target_mm = 100.0f,    // Default: 100 mm from wall
     float tol_mm = 5.0f)        // Default: ±5 mm tolerance
 {
     // 1. Set up PID target
@@ -35,7 +35,7 @@ void driveToWall(
         float vx_mm_s = distPID.compute(current); // mm/s
 
         // Clamp vx for safety, e.g., -100 to +100 mm/s
-        // constrain is used to limit (clamps) to a specified minimum and maximum value
+        // constrain is used to limit (clamps) to a specified minimum and maximum distance
         vx_mm_s = constrain(vx_mm_s, -100.0f, 100.0f);
 
         float vx_m_s = vx_mm_s / 1000.0f; // convert to m/s
@@ -45,7 +45,8 @@ void driveToWall(
 
         setWheelSpeeds(ws.wL, ws.wR, leftMotor, rightMotor, maxWheelSpeedRadPerSec);
 
-        // Check stop condition
+        // Check stop condition - The robot's velocity threshold
+        // The robot's linear speed is less than 2 mm/s (the robot has stopped moving forward/back).
         if (fabs(distPID.getError()) < tol_mm && fabs(vx_mm_s) < 2.0f) 
           break;
           delay(20);
@@ -60,7 +61,7 @@ void turnToAngle(
     mtrn3100::Motor& rightMotor,
     mtrn3100::PIDController& turnPID,
     float maxWheelSpeedRadPerSec,
-    float target_relative_rad = M_PI/2, // +90 deg
+    float target_relative_rad = M_PI/2,    // +90 deg
     float tol_rad = 0.0524f)              // Default: ±3 deg tolerance
 {
     float start = getYawRad();    // Need to write this function
@@ -79,7 +80,7 @@ void turnToAngle(
         float omega = turnPID.compute(curr);
 
         // Clamp for safety
-        // "constrain" variable is used to limit (clamps) to a specified minimum and maximum value
+        // "constrain" variable is used to limit (clamps) to a specified minimum and maximum omega - can be -2 to +2
         omega = constrain(omega, -1.0f, 1.0f);
 
         // No forward motion
@@ -87,10 +88,11 @@ void turnToAngle(
 
         setWheelSpeeds(ws.wL, ws.wR, leftMotor, rightMotor, maxWheelSpeedRadPerSec);
 
+        // Check condition - The robot's angular velocity threshold, 0.01f for angular velocity.
+        // Small enough that for robot not turning anymore.
         if (fabs(turnPID.getError()) < tol_rad && fabs(omega) < 0.01f) 
           break;
-
-        delay(20);
+          delay(20);
     }
     setWheelSpeeds(0, 0, leftMotor, rightMotor, maxWheelSpeedRadPerSec);
 }
@@ -107,7 +109,7 @@ void loop() {
     delay(500); // Not sure
 
     // Turn 90 degrees right
-    turnToAngle(kin, leftMotor, rightMotor, turnPID, maxWheelSpeed, -M_PI/2, 0.05f);
+    turnToAngle(kin, leftMotor, rightMotor, turnPID, maxWheelSpeed, -M_PI/2, 0.0524f);
 
     while (1); // Stop forever
 }
