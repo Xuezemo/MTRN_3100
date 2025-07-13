@@ -4,6 +4,7 @@
 #include "PIDController.hpp"
 #include "IMU.hpp" // Not sure exact file name - @Joe
 #include "Kinematics.hpp"
+#include "RobotHelpers.hpp" // Helper function to change rad/s into PWM for Arduino
 
 // Motor and encoder pin assignments
 mtrn3100::Motor leftMotor(?,?);   //  pins
