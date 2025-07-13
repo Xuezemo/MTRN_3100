@@ -1,4 +1,4 @@
-// Include all your headers
+// Headers List needed in main.cpp
 #include "Motor.hpp"
 #include "Encoder.hpp"
 #include "PIDController.hpp"
@@ -62,7 +62,7 @@ void turnToAngle(
     float target_relative_rad = M_PI/2, // +90 deg
     float tol_rad = 0.0524f)              // Default: ±3 deg tolerance
 {
-    float start = getYawRad();
+    float start = getYawRad();    // Need to write this function
     float target = start + target_relative_rad;
 
     // Keep in -pi to +pi range
@@ -72,7 +72,7 @@ void turnToAngle(
     turnPID.zeroAndSetTarget(start, target);
 
     while (true) {
-        float curr = getYawRad();
+        float curr = getYawRad(); 
 
         // Compute angular velocity command (rad/s)
         float omega = turnPID.compute(curr);
@@ -102,7 +102,7 @@ void loop() {
     // Drive to wall 100mm away
     driveToWall(kin, leftMotor, rightMotor, distPID, maxWheelSpeed, 100.0f, 5.0f);
 
-    delay(500);
+    delay(500); // Not sure
 
     // Turn 90 degrees right
     turnToAngle(kin, leftMotor, rightMotor, turnPID, maxWheelSpeed, -M_PI/2, 0.05f);
