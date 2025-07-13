@@ -35,6 +35,7 @@ void driveToWall(
         float vx_mm_s = distPID.compute(current); // mm/s
 
         // Clamp vx for safety, e.g., -100 to +100 mm/s
+        // constrain is used to limit (clamps) to a specified minimum and maximum value
         vx_mm_s = constrain(vx_mm_s, -100.0f, 100.0f);
 
         float vx_m_s = vx_mm_s / 1000.0f; // convert to m/s
@@ -78,6 +79,7 @@ void turnToAngle(
         float omega = turnPID.compute(curr);
 
         // Clamp for safety
+        // "constrain" variable is used to limit (clamps) to a specified minimum and maximum value
         omega = constrain(omega, -1.0f, 1.0f);
 
         // No forward motion
