@@ -10,9 +10,9 @@ mtrn3100::Motor leftMotor(?,?);   //  pins
 mtrn3100::Motor rightMotor(?,?); //   pins
 
 mtrn3100::Kinematics kin(?,?); // mm radius, mm wheelbase
-mtrn3100::PIDController distPID(?,?,?); // Tune these!
-mtrn3100::PIDController turnPID(?,?,?); // Tune these!
-float maxWheelSpeed = ?f; // max rad/s for your motor
+mtrn3100::PIDController distPID(?,?,?); // Need to Tune in Lab!
+mtrn3100::PIDController turnPID(?,?,?); // Need to Tune in Lab!
+float maxWheelSpeed = ?f; // max rad/s for the motor
 
 // Function Implementations 
 void driveToWall(
@@ -25,7 +25,7 @@ void driveToWall(
     float tol_mm = 5.0f)        // Default: ±5 mm tolerance
 {
     // 1. Set up PID target
-    float start = getFrontLidarMM();
+    float start = getFrontLidarMM(); // Need to write this function 
     distPID.zeroAndSetTarget(start, target_mm);
 
     // 2. Loop until within tolerance
