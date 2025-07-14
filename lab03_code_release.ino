@@ -5,17 +5,22 @@
 #include "OLED.hpp"
 #include "I2Cdev.h"
 #include "MPU6050.h"
+#include "IMU.hpp"
+#include "MotionController.hpp"
+#include "Lidar.hpp"
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include <Adafruit_MPU6050.h>
-#include <Adafruit_Sensor.h>
+#include <VL6180X.h>
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 MPU6050 accelgyro;
+mtrn3100::IMU imu;
 int16_t ax, ay, az;
 int16_t gx, gy, gz;
+
+mtrn3100::Kinematics kinematics(0.016, 0.102);
 
 #define MOT1PWM 11 // PIN 9 is a PWM pin
 #define MOT1DIR 12
@@ -34,26 +39,33 @@ mtrn3100::Motor motor2(MOT2PWM,MOT2DIR);
 mtrn3100::Encoder encoder2(EN2_A, EN2_B);
 
 
-mtrn3100::PIDController pid1(38.0, 0.0, 1.5);  
-mtrn3100::PIDController pid2(38.0, 0.0, 1.5);  
+mtrn3100::Lidar lidar1(A0, 0x40);  // sensor1 at pin A0, address 0x40
+mtrn3100::Lidar lidar2(A1, 0x41);  // sensor2 at pin A1, address 0x41
+mtrn3100::Lidar lidar3(A2, 0x42);  // sensor3 at pin A2, address 0x42
 
-void calibrateGyroBias() {
-  const int N = 100;
-  long sum_gx = 0, sum_gy = 0, sum_gz = 0;
-  int16_t ax, ay, az, gx, gy, gz;
+// VL6180X sensor2;
+int sensor1_pin = A0; //40
+int sensor2_pin = A1; //41
+int sensor3_pin = A2; //42
 
-  for (int i = 0; i < N; i++) {
-    accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-    sum_gx += gx;
-    sum_gy += gy;
-    sum_gz += gz;
-    delay(2);
-  }
+// void LidarInitialize(){
+//   pinMode(sensor2_pin, OUTPUT);
+//   digitalWrite(sensor2_pin, LOW);
 
-  gx_offset = (sum_gx / (float)N) / 131.0;
-  gy_offset = (sum_gy / (float)N) / 131.0;
-  gz_offset = (sum_gz / (float)N) / 131.0;
-}
+//   digitalWrite(sensor2_pin, HIGH);
+//   delay(50);
+//   sensor2.init();
+//   sensor2.configureDefault();
+//   sensor2.setTimeout(250);
+//   sensor2.setAddress(0x41);
+//   delay(50);
+
+// }
+
+
+mtrn3100::MotionController controller(motor1, motor2, kinematics, imu);
+
+
 
 void setup() {
   Serial.begin(115200);
@@ -61,9 +73,6 @@ void setup() {
 
   encoder1.reset();
   encoder2.reset();
-
-  pid1.zeroAndSetTarget(encoder1.getRotation(), -(10.0f * PI)); 
-  pid2.zeroAndSetTarget(encoder2.getRotation(), 10.0f * PI);
 
     if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
     Serial.println(F("SSD1306 allocation failed"));
@@ -80,57 +89,51 @@ void setup() {
             logo_bmp, LOGO_WIDTH, LOGO_HEIGHT, SSD1306_WHITE);
   display.display();
 
-  accelgyro.initialize();
+  imu.begin();
+  // LidarInitialize();
+  // lidar1.begin();
+  lidar2.begin();
+  // lidar3.begin();
 
   Wire.beginTransmission(0x68);
   Wire.write(0x1A);  // CONFIG register
   Wire.write(0x03);  // DLPF_CFG = 3 → 44Hz
   Wire.endTransmission();
+
+
+
   delay(500);
 }
 
+bool hasTurned = false;  
 
 void loop() {
-  const int N = 10;  
-
-  int16_t ax, ay, az, gx, gy, gz;
-  long sum_ax = 0, sum_ay = 0, sum_az = 0;
-  long sum_gx = 0, sum_gy = 0, sum_gz = 0;
-
-  for (int i = 0; i < N; i++) {
-    accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-    sum_ax += ax; sum_ay += ay; sum_az += az;
-    sum_gx += gx; sum_gy += gy; sum_gz += gz;
-    delay(2);  
-  }
-
-  float ax_g = (sum_ax / N) / 16384.0;
-  float ay_g = (sum_ay / N) / 16384.0;
-  float az_g = (sum_az / N) / 16384.0;
-
-  float gx_dps = (sum_gx / N) / 131.0;
-  float gy_dps = (sum_gy / N) / 131.0;
-  float gz_dps = (sum_gz / N) / 131.0;
-
+  imu.update();
 
   display.clearDisplay();
   display.setCursor(0, 0);
-  display.println("Accel (g):");
-
+  display.println("Roll/Pitch/Yaw:");
   display.setCursor(0, 10);
-  display.print("X: "); display.print(ax_g, 2);
-  display.print(" Y: "); display.print(ay_g, 2);
-  display.print(" Z: "); display.print(az_g, 2);
+  display.print("R: "); display.print(imu.getRoll(), 1);
+  display.print(" P: "); display.print(imu.getPitch(), 1);
+  display.print(" Y: "); display.print(imu.getYaw(), 1);
 
   display.setCursor(0, 30);
-  display.println("Gyro (deg/s):");
-
-  display.setCursor(0, 40);
-  display.print("X: "); display.print(gx_dps, 2);
-  display.print(" Y: "); display.print(gy_dps, 2);
-  display.print(" Z: "); display.print(gz_dps, 2);
+  display.print("Dis: "); display.print(lidar2.readDistance(), 1);
 
   display.display();
+  delay(20); 
+
+  
+
+  controller.update();  
+  // if (!hasTurned && !controller.isTurning()) {
+  //   controller.startTurnRight(90);  
+  //   hasTurned = true;               
+  // }
+
+
+  
 
   delay(200); 
 
