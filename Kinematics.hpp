@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include <math.h>
@@ -5,11 +6,11 @@
 namespace mtrn3100 {
 
   struct Velocity {
-  float vx;     // linear velocity in x (m/s)
-  float vy;     // usually 0 for planar diff drive
-  float omega;  // angular velocity (rad/s)
+    float vx;     // linear velocity in x (m/s)
+    float vy;     // usually 0 for planar diff drive
+    float omega;  // angular velocity (rad/s)
 };
-struct WheelSpeeds {
+  struct WheelSpeeds {
     float wL;  // Left wheel angular velocity (rad/s)
     float wR;  // Right wheel angular velocity (rad/s)
 };
