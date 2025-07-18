@@ -33,10 +33,14 @@ void setWheelSpeeds(float wL, float wR) {
 }
 
 void setup() {
-    Serial.begin(115200);
-    frontLidar.begin();
-    float current = frontLidar.readDistance();
-    distPID.zeroAndSetTarget(current, 100.0f);
+    // Arduino setup code
+    Serial.begin(9600);
+    Serial.print("Please input string: ");
+    while (Serial.available() < 8);  
+    for (int j = 0; j < 8; j++) {
+        input_string += (char)Serial.read();
+    }
+    input_received = true;
 }
 
 // Function Implementations
@@ -57,9 +61,27 @@ bool driveToWall() {
 }
 
 void loop() {
-    if (driveToWall()) {
-        while (1); // Stop forever when arrived
+    if (i < 8 && input_received == true) {
+        if (input_string[i] == 'l') {
+            turnToAngle(kin, leftMotor, rightMotor, turnPID, maxWheelSpeedRadPerSec, -M_PI/2);
+        }
+
+        else if (input_string[i] == 'r') {
+            turnToAngle(kin, leftMotor, rightMotor, turnPID, maxWheelSpeedRadPerSec, M_PI/2);
+        }
+
+        else if (input_string[i] == 'f') {
+            mtrn3100::WheelSpeeds ws = kin.inverseKinematics(vx_m_s, 0);
+            setWheelSpeeds(ws.wL, ws.wR, leftMotor, rightMotor, maxWheelSpeedRadPerSec);
+            // Need to test timeout value here according to time robot should be moving
+            setTimeout(300);
+            setWheelSpeeds(0, 0, leftMotor, rightMotor, maxWheelSpeedRadPerSec);
+        }
+
+        i++;
+        // Delay between each action - can be updated upon testing
+        delay(5000);
     }
-    delay(20);
+
 }
 
