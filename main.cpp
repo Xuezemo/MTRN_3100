@@ -73,7 +73,7 @@ void loop() {
         else if (input_string[i] == 'f') {
             mtrn3100::WheelSpeeds ws = kin.inverseKinematics(vx_m_s, 0);
             setWheelSpeeds(ws.wL, ws.wR, leftMotor, rightMotor, maxWheelSpeedRadPerSec);
-            // Need to test timeout value here according to time robot should be moving
+            // Should be replaced with the distance function in MotionController.hpp
             setTimeout(300);
             setWheelSpeeds(0, 0, leftMotor, rightMotor, maxWheelSpeedRadPerSec);
         }
